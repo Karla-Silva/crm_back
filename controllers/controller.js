@@ -1,59 +1,64 @@
-const User = require('../models/user.js')
+const User = require('../schema/schema.js')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const auth = require('../repositories/auth-repository.js')
+const db = require('../database/db.js')
+const { v4: uuidv4 } = require('uuid')
 require('dotenv').config()
+
 
 //----------------------------Registro de usuário--------------------------
 exports.register = async (req, res) => {
+    const newUser = req.body;
+    const isValid = User.userSchema.validate(newUser);
+
+    if(isValid.error){
+        return res.status(422).send(isValid.error.details)
+    }
+
     try {
-        const newPassword = await bcrypt.hash(req.body.password, 10)
-        await 
-        User.create({
-            name: req.body.name,
-            email: req.body.email,
-            password: newPassword,
-            plan: req.body.plan
-        })
+        const newPassword = await bcrypt.hash(newUser.password, 10);
+        await auth.CreateUser({newUser, newPassword})
+    
         return res.sendStatus(201)
     } catch (err) {
+        console.log(err + "ESSE ERRO AQUI")
         return res.sendStatus(500)
     }
 }
 
 //---------------------------------Login-----------------------------------
 exports.login = async (req, res) => {
-    const user = await User.findOne({
-        email: req.body.email
-    })
+    const user = req.body;
+    const isValid = User.loginSchema.validate(user);
 
-    if (!user) {
-          return res.sendStatus(401)
+    if(isValid.error){
+        return res.status(422).send(isValid.error.details)
     }
 
-    const isPasswordValid = await bcrypt.compare(
-        req.body.password,
-        user.password
-    )
-
-    if (isPasswordValid) {
-        const token = jwt.sign(
-            {
-                name: user.name,
-                email: user.email,
-            },
-            process.env.DATABASE_SECRET
-        )
-         
-        return res.send(token)
-    } else {
-        return res.sendStatus(401)
+    try{
+        const searchUser = await auth.Login(user);
+        console.log(searchUser.rows)
+        if(searchUser && bcrypt.compareSync(user.password, searchUser.rows[0].password)){
+            console.log('ETAPA 3')
+            const token = uuidv4()
+            const {id} = searchUser.rows[0]
+            console.log(id + 'ID AQUI')
+            await auth.InsertToken({id, token})
+            res.send(token)
+        }else{
+            return res.status(401).send('Não encontrado. Usuário ou senha incorretos.')
+        }
+    }catch(error){
+        console.error(error)
+        return res.status(401)
     }
 }
 
 //---------------------------Detalhes dos usuários----------------------
-exports.details = (req, res) => {
+exports.details = async (req, res) => {
     User.find({}).then(function(User){
-      res.send(User);
+        res.send(User);
     })
 }
 

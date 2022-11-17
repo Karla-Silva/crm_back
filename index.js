@@ -1,12 +1,15 @@
-(async () => {
-	const User = require("./models/user.js");
-  
-	const newUser = await User.create({
-		name: "karla",
-		email: "karla@gmail.com",
-		password: "123",
-		planId: 1
-	});
-	console.log(newUser);
-  })();
+const express = require("express");
+const cors = require("cors");
+const AuthRouter = require('./routes/routes.js');
+const dotenv = require("dotenv");
 
+dotenv.config();
+const server = express();
+
+server.use(cors());
+server.use(express.json());
+server.use(AuthRouter);
+
+server.listen(process.env.PORT, () => {
+    console.log(`Server listening on port ${process.env.PORT}`)
+})
