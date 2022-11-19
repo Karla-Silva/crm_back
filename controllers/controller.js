@@ -19,10 +19,8 @@ exports.register = async (req, res) => {
     try {
         const newPassword = await bcrypt.hash(newUser.password, 10);
         await auth.CreateUser({newUser, newPassword})
-    
         return res.sendStatus(201)
     } catch (err) {
-        console.log(err + "ESSE ERRO AQUI")
         return res.sendStatus(500)
     }
 }
@@ -38,52 +36,71 @@ exports.login = async (req, res) => {
 
     try{
         const searchUser = await auth.Login(user);
-        console.log(searchUser.rows)
         if(searchUser && bcrypt.compareSync(user.password, searchUser.rows[0].password)){
-            console.log('ETAPA 3')
-            const token = uuidv4()
+            const token = jwt.sign(
+                {
+                    name: user.name,
+                    email: user.email,
+                },
+                process.env.JWT_SECRET
+            )
             const {id} = searchUser.rows[0]
-            console.log(id + 'ID AQUI')
             await auth.InsertToken({id, token})
             res.send(token)
         }else{
             return res.status(401).send('Não encontrado. Usuário ou senha incorretos.')
         }
     }catch(error){
-        console.error(error)
-        return res.status(401)
+        return res.status(401).send('error')
     }
 }
 
 //---------------------------Detalhes dos usuários----------------------
-exports.details = async (req, res) => {
-    User.find({}).then(function(User){
-        res.send(User);
-    })
+exports.userslist = async (req, res) => {
+    const usersList = await auth.UserList(); 
+    return res.send(usersList).status(200);
 }
 
-//-----------------------------Atualizar usuário-------------------------
+
+//-----------------------------Atualizar nome-------------------------
 exports.update = async (req, res, next) => {
+    //verificar se token é válido
     const authorization = req.headers['authorization']
-    const token = authorization && authorization.split(' ')[1]
-  
+    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
+    
     if(!token) return res.sendStatus(401);
 
-    try{
-        jwt.verify(token, process.env.DATABASE_SECRET)
-    } catch (error){
-        return res.sendStatus(400)
-    }
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+        if (err) {
+            res.status(403).json("token is not valid")
+        }
+    })
 
-    User.findByIdAndUpdate({_id: req.params.id},
-                       req.body).then(function(){
-                        User.findOne({_id: req.params.id}).then(function(User){
-          res.send(User);
-        });
-    }).catch(next);
+    //verificar se token pertence a este usuário
+    const idInSession = await auth.FindToken(token)
+    if (req.params.id != idInSession.rows[0].id){
+        res.status(403).json("token is not valid")
+    }
+    
+    //atualizar nome
+    try{
+        const id = req.params.id;
+        const newName = req.body.name;
+        await auth.UpdateName({id, newName});
+        return res.status(200).send('Nome alterado');
+    }catch{
+        return res.status(500).send('error');
+    }
 }
 
-//---------------------------Deletar usuário---------------------------
+//-----------------------------Atualizar email-------------------------
+
+//-----------------------------Atualizar senha-------------------------
+
+//-----------------------------Atualizar plano-------------------------
+
+
+//---------------------------Deletar usuário REFAZER---------------------------
 exports.delete = (req, res, next) => {
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]
@@ -104,7 +121,7 @@ exports.delete = (req, res, next) => {
     }).catch(next);
 }
 
-//------------------------------Rota Privada------------------------------
+//------------------------------Rota Privada REFAZER------------------------------
 exports.private = async (req, res, next) => {
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]

@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const controller = require("../controllers/controller")
 
-router.get("/list",controller.details)
+router.get("/list",controller.userslist)
 router.delete("/delete/:id",controller.delete)
 router.put("/update/:id",controller.update)
 router.post("/register",controller.register)
