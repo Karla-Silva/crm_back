@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const auth = require('../repositories/auth-repository.js')
 const db = require('../database/db.js')
-const { v4: uuidv4 } = require('uuid')
+//const { v4: uuidv4 } = require('uuid')
 require('dotenv').config()
 
 
@@ -46,7 +46,7 @@ exports.login = async (req, res) => {
             )
             const {id} = searchUser.rows[0]
             await auth.InsertToken({id, token})
-            res.send(token)
+            res.send(token).status(200)
         }else{
             return res.status(401).send('Não encontrado. Usuário ou senha incorretos.')
         }
@@ -55,14 +55,42 @@ exports.login = async (req, res) => {
     }
 }
 
-//---------------------------Detalhes dos usuários----------------------
+//------------------------------Logout-----------------------------------
+exports.logout = async (req, res) => {
+    const authorization = req.headers['authorization']
+    const token = authorization && authorization.split(' ')[1]
+
+    if(!token) return res.status(401).send('Não autorizado');
+
+    try{
+        jwt.verify(token, process.env.JWT_SECRET)
+    } catch (error){
+        return res.status(400).send('Não autorizado')
+    }
+    
+    //verificar se token pertence a este usuário
+    const idInSession = await auth.FindToken(token)
+    if (req.params.id != idInSession.rows[0].id){
+        res.status(403).send("token is not valid")
+    }
+    const id = req.params.id;
+    
+    try{
+        auth.LogOut(id);
+        res.status(200).send('Logout concluido');
+    }catch(err){
+        console.log(err)
+        res.status(500).send('erro no logout');
+    }
+}
+
+//---------------------------Lista dos usuários----------------------
 exports.userslist = async (req, res) => {
     const usersList = await auth.UserList(); 
     return res.send(usersList).status(200);
 }
 
-
-//-----------------------------Atualizar nome-------------------------
+//-----------------------------Atualizar NOME-------------------------
 exports.update = async (req, res, next) => {
     //verificar se token é válido
     const authorization = req.headers['authorization']
@@ -72,56 +100,83 @@ exports.update = async (req, res, next) => {
 
     jwt.verify(token, process.env.JWT_SECRET, (err) => {
         if (err) {
-            res.status(403).json("token is not valid")
+            res.status(403).send("token is not valid")
         }
     })
 
     //verificar se token pertence a este usuário
     const idInSession = await auth.FindToken(token)
     if (req.params.id != idInSession.rows[0].id){
-        res.status(403).json("token is not valid")
+        res.status(403).send("token is not valid")
     }
+
+    const id = req.params.id;
+    const newName = req.body.name;
     
-    //atualizar nome
     try{
-        const id = req.params.id;
-        const newName = req.body.name;
-        await auth.UpdateName({id, newName});
+        await auth.Update({id, newName});
         return res.status(200).send('Nome alterado');
     }catch{
         return res.status(500).send('error');
     }
 }
 
-//-----------------------------Atualizar email-------------------------
-
-//-----------------------------Atualizar senha-------------------------
-
-//-----------------------------Atualizar plano-------------------------
-
-
-//---------------------------Deletar usuário REFAZER---------------------------
-exports.delete = (req, res, next) => {
+//---------------------------Atualizar Senha NÃO FUNCIONA--------------------------
+exports.changePassword = async (req, res, next) => {
+    //verificar se token é válido
     const authorization = req.headers['authorization']
-    const token = authorization && authorization.split(' ')[1]
-  
+    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
+    
     if(!token) return res.sendStatus(401);
 
-    try{
-        jwt.verify(token, process.env.DATABASE_SECRET)
-    } catch (error){
-        return res.sendStatus(400)
-    }
-    
-    User.findByIdAndRemove({_id: req.params.id}).then(function(User){
-        if(!User){
-            return res.status(404).send('usuário não encontrado')
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+        if (err) {
+            res.status(403).send("token is not valid")
         }
-      return res.send(200);
-    }).catch(next);
+    })
+    
+     try{
+        const id = req.params.id;
+        const passwordNew = req.body.password;
+        const np = await bcrypt.hash(passwordNew, 10);
+        await auth.ChangePassword({id, np});
+        res.status(200).send('Senha alterada')
+    }catch(err){
+        res.status(500).send(err)
+    }
 }
 
-//------------------------------Rota Privada REFAZER------------------------------
+//---------------------------Deletar usuário---------------------------
+exports.delete = async (req, res, next) => {
+    const authorization = req.headers['authorization']
+    const token = authorization && authorization.split(' ')[1]
+
+    if(!token) return res.status(401).send('Não autorizado');
+
+    try{
+        jwt.verify(token, process.env.JWT_SECRET)
+    } catch (error){
+        return res.status(400).send('Não autorizado')
+    }
+    
+    //verificar se token pertence a este usuário
+    const idInSession = await auth.FindToken(token)
+    if (req.params.id != idInSession.rows[0].id){
+        res.status(403).send("token is not valid")
+    }
+    const id = req.params.id;
+    
+    try{
+        auth.LogOut(id);
+        auth.DeleteUser(id);
+        res.status(200).send('Usuário deletado');
+    }catch(err){
+        console.log(err)
+        res.status(500).send('Não deletado');
+    }
+}
+
+//------------------------------Rota Privada------------------------------
 exports.private = async (req, res, next) => {
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]
@@ -129,13 +184,13 @@ exports.private = async (req, res, next) => {
     if(!token) return res.sendStatus(401);
 
     try{
-        jwt.verify(token, process.env.DATABASE_SECRET)
+        jwt.verify(token, process.env.JWT_SECRET)
     } catch (error){
         return res.sendStatus(400)
     }
 
     const id = req.params.id
-    const user = await User.findById(id, '-password')
+    const user = await auth.FindUserById(id)
 
     if(!user){
         return res.status(404).json({msg: "Usuário não encontrado"})
@@ -143,3 +198,11 @@ exports.private = async (req, res, next) => {
 
     res.status(200).json({user})
 }
+
+//----------------------------Criar cliente----------------------
+
+//----------------------------Add necessidades------------------
+
+//----------------------------Add Proposta----------------------
+
+//----------------------------Add Fim---------------------------
