@@ -42,9 +42,9 @@ async function LogOut(id){
     return db.query('DELETE FROM session WHERE id = $1', [id])
 }
 
-async function ChangePassword({id, password}){
+async function ChangePassword({id, newPassword}){
     return db.query('UPDATE crmuser SET password = $1 WHERE id = $2',
-    [password, id])
+    [newPassword, id])
 }
 
 module.exports = {ChangePassword, LogOut, CreateUser, FindUserById, SearchEmail, Update, Login, UserList, InsertToken, FindToken, DeleteUser}

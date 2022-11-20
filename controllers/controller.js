@@ -90,7 +90,7 @@ exports.userslist = async (req, res) => {
     return res.send(usersList).status(200);
 }
 
-//-----------------------------Atualizar NOME-------------------------
+//-----------------------------Atualizar Nome-------------------------
 exports.update = async (req, res, next) => {
     //verificar se token é válido
     const authorization = req.headers['authorization']
@@ -121,8 +121,8 @@ exports.update = async (req, res, next) => {
     }
 }
 
-//---------------------------Atualizar Senha NÃO FUNCIONA--------------------------
-exports.changePassword = async (req, res, next) => {
+//---------------------------Atualizar Senha--------------------------
+exports.changePassword = async (req, res) => {
     //verificar se token é válido
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
@@ -137,9 +137,8 @@ exports.changePassword = async (req, res, next) => {
     
      try{
         const id = req.params.id;
-        const passwordNew = req.body.password;
-        const np = await bcrypt.hash(passwordNew, 10);
-        await auth.ChangePassword({id, np});
+        const newPassword = await bcrypt.hash(req.body.password, 10);
+        await auth.ChangePassword({id, newPassword});
         res.status(200).send('Senha alterada')
     }catch(err){
         res.status(500).send(err)

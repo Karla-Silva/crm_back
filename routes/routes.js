@@ -9,6 +9,6 @@ router.post("/register",controller.register)
 router.post("/login",controller.login)
 router.get("/user/:id",controller.private)
 router.delete("/logout/:id",controller.logout)
-router.put("/changepassword/:id",controller.changePassword)
+router.put("/changepassword/:id",controller.changePassword) //náo funciona
 
 module.exports = router
