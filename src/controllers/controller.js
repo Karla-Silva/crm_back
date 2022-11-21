@@ -87,7 +87,7 @@ exports.logout = async (req, res) => {
 //---------------------------Lista dos usuários----------------------
 exports.userslist = async (req, res) => {
     const usersList = await auth.UserList(); 
-    return res.send(usersList).status(200);
+    return res.json(usersList).status(200);
 }
 
 //-----------------------------Atualizar Nome-------------------------
