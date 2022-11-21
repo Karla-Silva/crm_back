@@ -1,4 +1,4 @@
-const User = require('../schema/schema.js')
+const User = require('../../schema/schema.js')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const auth = require('../repositories/auth-repository.js')
@@ -146,7 +146,7 @@ exports.changePassword = async (req, res) => {
 }
 
 //---------------------------Deletar usuário---------------------------
-exports.delete = async (req, res, next) => {
+exports.delete = async (req, res) => {
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]
 
@@ -175,8 +175,8 @@ exports.delete = async (req, res, next) => {
     }
 }
 
-//------------------------------Rota Privada------------------------------
-exports.private = async (req, res, next) => {
+//------------------------------Rota Privada (encontra usuário pelo id)------------------------------
+exports.private = async (req, res) => {
     const authorization = req.headers['authorization']
     const token = authorization && authorization.split(' ')[1]
   
@@ -199,9 +199,30 @@ exports.private = async (req, res, next) => {
 }
 
 //----------------------------Criar cliente----------------------
+//Método POST
+//verificar se crmuser está logado com token
+
+//criar cliente crmuserid = req.params.id cliente = req.body
+
+//-------------------------GET Clientes criados-----------------
+
 
 //----------------------------Add necessidades------------------
+//Método PUT
+
+//--------------------------GET Clientes com necssidades---------
+
 
 //----------------------------Add Proposta----------------------
+//Método PUT
+
+//--------------------------GET Clientes com proposta----------
+
 
 //----------------------------Add Fim---------------------------
+//Método PUT
+
+//--------------------------GET Clientes encerrados------------
+
+
+//----------------------------Deletar cliente-------------------
