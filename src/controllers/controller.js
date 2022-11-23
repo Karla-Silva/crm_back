@@ -21,7 +21,7 @@ exports.register = async (req, res) => {
         await auth.CreateUser({newUser, newPassword})
         return res.sendStatus(201)
     } catch (err) {
-        return res.sendStatus(501)
+        return res.status(500).send('erro no cadastro')
     }
 }
 
