@@ -13,8 +13,8 @@ exports.register = async (req, res) => {
     const isValid = User.userSchema.validate(newUser);
 
     if(isValid.error){
-        return res.status(422).send(isValid.error.details)
-    }
+        return res.status(422).send(isValid.error.details, "erro isValid")
+    }  
 
     try {
         const newPassword = await bcrypt.hash(newUser.password, 10);

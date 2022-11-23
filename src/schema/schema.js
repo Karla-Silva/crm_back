@@ -6,8 +6,8 @@ const loginSchema = Joi.object({
 })
 
 const userSchema = Joi.object({
-    name: Joi.string().required(),
     email: Joi.string().email().required(),
+    name: Joi.string().required(),
     password: Joi.string().required(),
     plan: Joi.string().required()
 })
