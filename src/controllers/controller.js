@@ -90,37 +90,6 @@ exports.userslist = async (req, res) => {
     return res.json(usersList).status(200);
 }
 
-//-----------------------------Atualizar Nome-------------------------
-exports.update = async (req, res, next) => {
-    //verificar se token é válido
-    const authorization = req.headers['authorization']
-    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
-    
-    if(!token) return res.sendStatus(401);
-
-    jwt.verify(token, process.env.JWT_SECRET, (err) => {
-        if (err) {
-            res.status(403).send("token is not valid")
-        }
-    })
-
-    //verificar se token pertence a este usuário
-    const idInSession = await auth.FindToken(token)
-    if (req.params.id != idInSession.rows[0].id){
-        res.status(403).send("token is not valid")
-    }
-
-    const id = req.params.id;
-    const newName = req.body.name;
-    
-    try{
-        await auth.Update({id, newName});
-        return res.status(200).send('Nome alterado');
-    }catch{
-        return res.status(500).send('error');
-    }
-}
-
 //---------------------------Atualizar Senha--------------------------
 exports.changePassword = async (req, res) => {
     //verificar se token é válido

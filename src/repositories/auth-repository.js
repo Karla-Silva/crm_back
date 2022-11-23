@@ -47,4 +47,15 @@ async function ChangePassword({id, newPassword}){
     [newPassword, id])
 }
 
-module.exports = {ChangePassword, LogOut, CreateUser, FindUserById, SearchEmail, Update, Login, UserList, InsertToken, FindToken, DeleteUser}
+module.exports = {CreateUser, 
+    FindUserById, 
+    Update, 
+    SearchEmail, 
+    Login, 
+    UserList, 
+    InsertToken, 
+    FindToken, 
+    DeleteUser,
+    LogOut, 
+    ChangePassword
+   }
