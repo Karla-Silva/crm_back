@@ -13,7 +13,7 @@ exports.register = async (req, res) => {
     const isValid = User.userSchema.validate(newUser);
 
     if(isValid.error){
-        return res.status(422).send(isValid.error.details, "erro isValid")
+        return res.status(422).send(isValid.error.details)
     }  
 
     try {
