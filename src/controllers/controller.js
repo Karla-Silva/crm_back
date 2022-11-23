@@ -21,7 +21,7 @@ exports.register = async (req, res) => {
         await auth.CreateUser({newUser, newPassword})
         return res.sendStatus(201)
     } catch (err) {
-        return res.sendStatus(500)
+        return res.sendStatus(501)
     }
 }
 
