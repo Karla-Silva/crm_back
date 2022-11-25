@@ -19,7 +19,25 @@ exports.register = async (req, res) => {
     try {
         const newPassword = await bcrypt.hash(newUser.password, 10);
         await auth.CreateUser({newUser, newPassword})
-        return res.sendStatus(201)
+        console.log('ETAPA 1')
+        const user = {
+            email: newUser.email,
+            password: newUser.password
+        }
+        console.log(user)
+        const token = jwt.sign(
+            {
+                name: newUser.name,
+                email: newUser.email
+            },
+            process.env.JWT_SECRET
+        )
+        console.log('token')
+        const searchUser = await auth.Login(user);
+        console.log(searchUser)
+        const id = searchUser.rows[0].id
+        await auth.InsertToken({id, token})
+        return res.status(201).send(token)
     } catch (err) {
         return res.status(500).send('erro no cadastro')
     }
@@ -39,8 +57,8 @@ exports.login = async (req, res) => {
         if(searchUser && bcrypt.compareSync(user.password, searchUser.rows[0].password)){
             const token = jwt.sign(
                 {
-                    name: user.name,
-                    email: user.email,
+                    name: searchUser.rows[0].name,
+                    email: searchUser.rows[0].email
                 },
                 process.env.JWT_SECRET
             )
@@ -68,15 +86,8 @@ exports.logout = async (req, res) => {
         return res.status(400).send('Não autorizado')
     }
     
-    //verificar se token pertence a este usuário
-    const idInSession = await auth.FindToken(token)
-    if (req.params.id != idInSession.rows[0].id){
-        res.status(403).send("token is not valid")
-    }
-    const id = req.params.id;
-    
     try{
-        auth.LogOut(id);
+        await auth.LogOut(token);
         res.status(200).send('Logout concluido');
     }catch(err){
         console.log(err)
@@ -103,39 +114,39 @@ exports.changePassword = async (req, res) => {
             res.status(403).send("token is not valid")
         }
     })
+
+    const user = req.body;
     
-     try{
-        const id = req.params.id;
+    try{ 
+        const searchUser = await auth.Login(user);
+        const {id} = searchUser.rows[0]
         const newPassword = await bcrypt.hash(req.body.password, 10);
         await auth.ChangePassword({id, newPassword});
-        res.status(200).send('Senha alterada')
+        res.status(200).send('Senha alterada') 
     }catch(err){
         res.status(500).send(err)
-    }
+    } 
 }
 
 //---------------------------Deletar usuário---------------------------
 exports.delete = async (req, res) => {
     const authorization = req.headers['authorization']
-    const token = authorization && authorization.split(' ')[1]
-
-    if(!token) return res.status(401).send('Não autorizado');
-
-    try{
-        jwt.verify(token, process.env.JWT_SECRET)
-    } catch (error){
-        return res.status(400).send('Não autorizado')
-    }
+    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
     
-    //verificar se token pertence a este usuário
-    const idInSession = await auth.FindToken(token)
-    if (req.params.id != idInSession.rows[0].id){
-        res.status(403).send("token is not valid")
-    }
-    const id = req.params.id;
+    if(!token) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+        if (err) {
+            res.status(403).send("token is not valid")
+        }
+    })
+
+    const user = req.body;
     
     try{
-        auth.LogOut(id);
+        const searchUser = await auth.Login(user);
+        const {id} = searchUser.rows[0]
+        auth.LogOut(token);
         auth.DeleteUser(id);
         res.status(200).send('Usuário deletado');
     }catch(err){

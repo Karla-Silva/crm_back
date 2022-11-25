@@ -38,8 +38,8 @@ async function DeleteUser(id){
     return db.query('DELETE FROM crmuser WHERE id = $1', [id])
 }
 
-async function LogOut(id){
-    return db.query('DELETE FROM session WHERE id = $1', [id])
+async function LogOut(token){
+    return db.query('DELETE FROM session WHERE token = $1', [token])
 }
 
 async function ChangePassword({id, newPassword}){

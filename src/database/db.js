@@ -19,10 +19,10 @@ const db = new Pool({
   /* connectionString:process.env.DATABASE_URL */
 });
 
-const query = db.query('SELECT * FROM crmuser;');
+/* const query = db.query('SELECT * FROM crmuser;');
 
 query.then(result => {
     console.log(result.rows);
-});
+}); */
 
 module.exports = db;
