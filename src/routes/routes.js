@@ -10,5 +10,12 @@ router.delete("/logout",controller.logout)
 router.put("/changepassword",controller.changePassword)
 router.post("/createclient",controller.createClient)
 router.get("/getclients/:email",controller.getclients)
+router.put("/addnecessities",controller.addNecessities)
+router.get("/getnecessities/:email",controller.getNecessities)
+router.put("/addproposal",controller.addProposal)
+router.get("/getproposal/:email",controller.getProposal)
+router.put("/addresult",controller.addResult)
+router.get("/getresult/:email",controller.getResult)
+router.delete("/deleteclient/:clientid",controller.deleteClient)
 
 module.exports = router
