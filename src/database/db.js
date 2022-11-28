@@ -10,19 +10,20 @@ const host = process.env.POSTGRES_HOST;
 const port = process.env.POSTGRES_PORT;
 const database = process.env.POSTGRES_DATABASE;
 
+/* const connectionString = process.env.DATABASE_URL  */
 const db = new Pool({
   user,
   password,
   host,
   port,
   database
-  /* connectionString:process.env.DATABASE_URL */
+ /*  connectionString, */
 });
 
-/* const query = db.query('SELECT * FROM crmuser;');
+const query = db.query('SELECT * FROM crmuser;');
 
 query.then(result => {
     console.log(result.rows);
-}); */
-
+}); 
+ 
 module.exports = db;

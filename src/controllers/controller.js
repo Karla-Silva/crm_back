@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken')
 const auth = require('../repositories/auth-repository.js')
 const client = require('../repositories/client-repository.js')
 const db = require('../database/db.js')
-//const { v4: uuidv4 } = require('uuid')
 require('dotenv').config()
 
 //----------------------------Registro de usuário--------------------------
