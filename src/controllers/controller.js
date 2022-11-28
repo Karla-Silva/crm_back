@@ -2,10 +2,10 @@ const User = require('../schema/schema.js')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const auth = require('../repositories/auth-repository.js')
+const client = require('../repositories/client-repository.js')
 const db = require('../database/db.js')
 //const { v4: uuidv4 } = require('uuid')
 require('dotenv').config()
-
 
 //----------------------------Registro de usuário--------------------------
 exports.register = async (req, res) => {
@@ -155,54 +155,81 @@ exports.delete = async (req, res) => {
     }
 }
 
-//------------------------------Rota Privada (encontra usuário pelo id)------------------------------
-exports.private = async (req, res) => {
-    const authorization = req.headers['authorization']
-    const token = authorization && authorization.split(' ')[1]
-  
-    if(!token) return res.sendStatus(401);
-
-    try{
-        jwt.verify(token, process.env.JWT_SECRET)
-    } catch (error){
-        return res.sendStatus(400)
-    }
-
-    const id = req.params.id
-    const user = await auth.FindUserById(id)
-
-    if(!user){
-        return res.status(404).json({msg: "Usuário não encontrado"})
-    }
-
-    res.status(200).json({user})
-}
 
 //----------------------------Criar cliente----------------------
-//Método POST
-//verificar se crmuser está logado com token
+exports.createClient = async (req, res) => {
+    //verificar se token é válido
+    const authorization = req.headers['authorization']
+    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
 
-//criar cliente crmuserid = req.params.id cliente = req.body
+    if(!token) return res.sendStatus(401);
 
-//-------------------------GET Clientes criados-----------------
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+        if (err) {
+            res.status(403).send("token is not valid")
+        }
+    })
 
+    const {email, clientName, clientEmail} = req.body;
+    
+    try{ 
+        const user = await auth.SearchEmail(email);
+        const {id} = user.rows[0];
+        const promise = await client.CreateClient({clientName, clientEmail, id});
+        res.sendStatus(201)
+    }catch(err){
+        res.status(500).send(err);
+    } 
+
+}
+
+//-------------------------GET Clientes -------------------------
+exports.getclients = async (req, res) => {
+    //verificar se token é válido
+    const authorization = req.headers['authorization']
+    const token = authorization && authorization.split(' ')[1]  //separar o "Bearer" do token
+ 
+    if(!token) return res.sendStatus(401);
+ 
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+        if (err) {
+            res.status(403).send("token is not valid")
+        }
+    })
+
+    const email = req.params.email;
+    
+    try{ 
+        const user = await auth.SearchEmail(email);
+        const {id} = user.rows[0];
+        const clientsList = await client.GetClients({id});
+        res.json(clientsList.rows).status(200);
+    }catch(err){
+        res.status(500).send(err);
+    } 
+}
 
 //----------------------------Add necessidades------------------
 //Método PUT
-
-//--------------------------GET Clientes com necssidades---------
+exports.addNecessities = async (req, res) => {
+    
+}
 
 
 //----------------------------Add Proposta----------------------
 //Método PUT
+exports.addProposal = async (req, res) => {
+    
+}
 
-//--------------------------GET Clientes com proposta----------
 
-
-//----------------------------Add Fim---------------------------
+//----------------------------Add Resultado---------------------------
 //Método PUT
-
-//--------------------------GET Clientes encerrados------------
-
+exports.addResult = async (req, res) => {
+    
+}
 
 //----------------------------Deletar cliente-------------------
+exports.deleteClients = async (req, res) => {
+    
+}
